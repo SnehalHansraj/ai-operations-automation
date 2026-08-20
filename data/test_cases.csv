@@ -1,0 +1,101 @@
+case_num,expected_issue_type,expected_order_id,text
+1,refund_request,46048,I'd like a refund for order #46048 please.
+2,delayed_delivery,23434,My package hasn't arrived yet. Order #23434 was supposed to arrive yesterday.
+3,refund_request,87397,I'd like a refund for order #87397 please.
+4,damaged_item,22280,The item in order #22280 arrived damaged.
+5,delayed_delivery,88907,Where is my order #88907? It hasn't shown up.
+6,delayed_delivery,95181,My package hasn't arrived yet. Order #95181 was supposed to arrive yesterday.
+7,refund_request,38893,"Please reimburse order #38893, I want my money back."
+8,damaged_item,10851,"Order #10851 came in a smashed box, the product is broken."
+9,cancellation,65392,"Please cancel my order #65392, I no longer need it."
+10,delayed_delivery,38221,My package hasn't arrived yet. Order #38221 was supposed to arrive yesterday.
+11,general_inquiry,23396,"Question about order #23396, when will it ship?"
+12,delayed_delivery,57052,My package hasn't arrived yet. Order #57052 was supposed to arrive yesterday.
+13,cancellation,15695,I want to cancel order #15695 before it ships.
+14,refund_request,59615,I'd like a refund for order #59615 please.
+15,delayed_delivery,92397,"Still waiting on order #92397, it's now 3 days late."
+16,refund_request,85674,"Please reimburse order #85674, I want my money back."
+17,delayed_delivery,16006,My package hasn't arrived yet. Order #16006 was supposed to arrive yesterday.
+18,refund_request,20458,"Please reimburse order #20458, I want my money back."
+19,general_inquiry,59823,Can you tell me more about order #59823?
+20,delayed_delivery,57819,Where is my order #57819? It hasn't shown up.
+21,delayed_delivery,37460,"Still waiting on order #37460, it's now 3 days late."
+22,refund_request,89840,I'd like a refund for order #89840 please.
+23,refund_request,31417,I'd like a refund for order #31417 please.
+24,damaged_item,93886,"Order #93886 came in a smashed box, the product is broken."
+25,refund_request,99733,I'd like a refund for order #99733 please.
+26,delayed_delivery,40021,My package hasn't arrived yet. Order #40021 was supposed to arrive yesterday.
+27,cancellation,62581,I want to cancel order #62581 before it ships.
+28,delayed_delivery,84341,My package hasn't arrived yet. Order #84341 was supposed to arrive yesterday.
+29,general_inquiry,37869,"Question about order #37869, when will it ship?"
+30,refund_request,94259,"Please reimburse order #94259, I want my money back."
+31,damaged_item,28301,"Order #28301 came in a smashed box, the product is broken."
+32,delayed_delivery,80644,Where is my order #80644? It hasn't shown up.
+33,delayed_delivery,66155,Where is my order #66155? It hasn't shown up.
+34,general_inquiry,57447,"Question about order #57447, when will it ship?"
+35,delayed_delivery,76784,My package hasn't arrived yet. Order #76784 was supposed to arrive yesterday.
+36,damaged_item,24371,The item in order #24371 arrived damaged.
+37,delayed_delivery,99192,My package hasn't arrived yet. Order #99192 was supposed to arrive yesterday.
+38,damaged_item,60432,The item in order #60432 arrived damaged.
+39,damaged_item,79352,"Order #79352 came in a smashed box, the product is broken."
+40,delayed_delivery,11504,Where is my order #11504? It hasn't shown up.
+41,refund_request,99353,I'd like a refund for order #99353 please.
+42,general_inquiry,94012,"Question about order #94012, when will it ship?"
+43,delayed_delivery,66985,"Still waiting on order #66985, it's now 3 days late."
+44,delayed_delivery,44522,My package hasn't arrived yet. Order #44522 was supposed to arrive yesterday.
+45,general_inquiry,76542,Can you tell me more about order #76542?
+46,general_inquiry,93748,"Question about order #93748, when will it ship?"
+47,wrong_item,30032,I received the wrong item for order #30032.
+48,damaged_item,80697,The item in order #80697 arrived damaged.
+49,general_inquiry,88504,Can you tell me more about order #88504?
+50,delayed_delivery,24662,My package hasn't arrived yet. Order #24662 was supposed to arrive yesterday.
+51,general_inquiry,41385,"Question about order #41385, when will it ship?"
+52,delayed_delivery,20322,Where is my order #20322? It hasn't shown up.
+53,delayed_delivery,19071,"Still waiting on order #19071, it's now 3 days late."
+54,general_inquiry,26828,Can you tell me more about order #26828?
+55,refund_request,44741,I'd like a refund for order #44741 please.
+56,wrong_item,37760,Order #37760 shipped the incorrect product.
+57,general_inquiry,50857,Can you tell me more about order #50857?
+58,damaged_item,67422,"Order #67422 came in a smashed box, the product is broken."
+59,general_inquiry,25860,"Question about order #25860, when will it ship?"
+60,delayed_delivery,54313,My package hasn't arrived yet. Order #54313 was supposed to arrive yesterday.
+61,delayed_delivery,40161,Where is my order #40161? It hasn't shown up.
+62,wrong_item,19305,I received the wrong item for order #19305.
+63,refund_request,40007,I'd like a refund for order #40007 please.
+64,delayed_delivery,53309,My package hasn't arrived yet. Order #53309 was supposed to arrive yesterday.
+65,delayed_delivery,46500,My package hasn't arrived yet. Order #46500 was supposed to arrive yesterday.
+66,refund_request,80678,I'd like a refund for order #80678 please.
+67,delayed_delivery,85525,Where is my order #85525? It hasn't shown up.
+68,damaged_item,63354,"Order #63354 came in a smashed box, the product is broken."
+69,delayed_delivery,96374,My package hasn't arrived yet. Order #96374 was supposed to arrive yesterday.
+70,damaged_item,63883,"Order #63883 came in a smashed box, the product is broken."
+71,damaged_item,98259,The item in order #98259 arrived damaged.
+72,refund_request,17944,I'd like a refund for order #17944 please.
+73,damaged_item,24322,"Order #24322 came in a smashed box, the product is broken."
+74,delayed_delivery,80292,My package hasn't arrived yet. Order #80292 was supposed to arrive yesterday.
+75,damaged_item,34050,"Order #34050 came in a smashed box, the product is broken."
+76,delayed_delivery,19880,My package hasn't arrived yet. Order #19880 was supposed to arrive yesterday.
+77,damaged_item,16630,The item in order #16630 arrived damaged.
+78,refund_request,22224,I'd like a refund for order #22224 please.
+79,general_inquiry,31798,Can you tell me more about order #31798?
+80,damaged_item,38016,"Order #38016 came in a smashed box, the product is broken."
+81,general_inquiry,31579,Can you tell me more about order #31579?
+82,damaged_item,44760,"Order #44760 came in a smashed box, the product is broken."
+83,general_inquiry,47388,"Question about order #47388, when will it ship?"
+84,damaged_item,30289,"Order #30289 came in a smashed box, the product is broken."
+85,delayed_delivery,17665,My package hasn't arrived yet. Order #17665 was supposed to arrive yesterday.
+86,wrong_item,51104,I received the wrong item for order #51104.
+87,delayed_delivery,72493,Where is my order #72493? It hasn't shown up.
+88,wrong_item,17455,I received the wrong item for order #17455.
+89,general_inquiry,34356,Can you tell me more about order #34356?
+90,delayed_delivery,98501,My package hasn't arrived yet. Order #98501 was supposed to arrive yesterday.
+91,general_inquiry,25713,"Question about order #25713, when will it ship?"
+92,general_inquiry,85880,Can you tell me more about order #85880?
+93,wrong_item,64948,I received the wrong item for order #64948.
+94,refund_request,44179,"Please reimburse order #44179, I want my money back."
+95,delayed_delivery,51180,Where is my order #51180? It hasn't shown up.
+96,delayed_delivery,27154,"Still waiting on order #27154, it's now 3 days late."
+97,refund_request,69929,"Please reimburse order #69929, I want my money back."
+98,delayed_delivery,11220,My package hasn't arrived yet. Order #11220 was supposed to arrive yesterday.
+99,damaged_item,19602,The item in order #19602 arrived damaged.
+100,wrong_item,27361,Order #27361 shipped the incorrect product.

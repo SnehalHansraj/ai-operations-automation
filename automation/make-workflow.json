@@ -1,0 +1,77 @@
+{
+  "_comment": "Blueprint of the Make.com scenario for this project. Make.com scenarios aren't hand-authored JSON you paste in like Zapier's export — you build this by adding these exact modules in this exact order in the Make.com editor. This file documents the scenario so it's reproducible and reviewable, and doubles as your README for the automation/ folder.",
+  "scenario_name": "Ops Automation - Incoming Request Router",
+  "modules": [
+    {
+      "step": 1,
+      "module": "Webhooks > Custom webhook",
+      "purpose": "Entry point. Generates a unique URL that receives incoming requests (simulating an email parser, a support-form submission, or a Slack message).",
+      "config": {
+        "method": "POST",
+        "expected_payload": { "text": "My package hasn't arrived yet. Order #12345 was supposed to arrive yesterday." }
+      }
+    },
+    {
+      "step": 2,
+      "module": "HTTP > Make a request",
+      "purpose": "Forwards the payload to the FastAPI backend's agent endpoint, which does the LLM classification, order lookup, business rules, and response generation internally.",
+      "config": {
+        "url": "{{env.API_BASE_URL}}/api/requests",
+        "method": "POST",
+        "headers": { "Content-Type": "application/json" },
+        "body": { "text": "{{1.text}}" }
+      }
+    },
+    {
+      "step": 3,
+      "module": "Router",
+      "purpose": "Branches based on the agent's returned status field.",
+      "routes": [
+        {
+          "condition": "{{2.status}} = resolved",
+          "next": "Route A: Slack notify (resolved)"
+        },
+        {
+          "condition": "{{2.status}} = escalated",
+          "next": "Route B: Slack notify (escalation) + create follow-up task"
+        }
+      ]
+    },
+    {
+      "step": "4a",
+      "module": "Slack > Create a message",
+      "purpose": "Route A — post the auto-generated response to the #ops-resolved channel for visibility.",
+      "config": {
+        "channel": "#ops-resolved",
+        "text": ":white_check_mark: Case {{2.id}} resolved automatically. Order {{2.order_id}} — {{2.response_text}}"
+      }
+    },
+    {
+      "step": "4b",
+      "module": "Slack > Create a message",
+      "purpose": "Route B — flag escalated cases for a human, tagging the on-call ops person.",
+      "config": {
+        "channel": "#ops-escalations",
+        "text": ":rotating_light: Case {{2.id}} escalated — order {{2.order_id}}. Needs manual review."
+      }
+    },
+    {
+      "step": 5,
+      "module": "Google Sheets > Add a row (optional)",
+      "purpose": "Appends a lightweight audit row (case id, issue type, action, processing time) so metrics can also be reviewed outside the dashboard.",
+      "config": {
+        "spreadsheet": "Ops Automation Log",
+        "row": ["{{2.id}}", "{{2.issue_type}}", "{{2.status}}", "{{2.processing_time_ms}}", "{{now}}"]
+      }
+    }
+  ],
+  "how_to_rebuild_in_make": [
+    "1. Create a new scenario in Make.com.",
+    "2. Add module: Webhooks > Custom webhook. Copy the generated URL — this is what you point test traffic at.",
+    "3. Add module: HTTP > Make a request. POST to your deployed FastAPI /api/requests endpoint (use ngrok or a public host during dev), forwarding {{1.text}}.",
+    "4. Add a Router module with two routes reading {{2.status}}.",
+    "5. On each route, add a Slack > Create a message module (requires connecting a Slack account/webhook).",
+    "6. (Optional) Add Google Sheets > Add a row for a simple audit trail.",
+    "7. Save, turn the scenario ON, and send a test POST to the webhook URL to verify end-to-end."
+  ]
+}

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Ops Automation — Metrics Dashboard</title>
+<style>
+  :root { --bg:#0f1420; --card:#171d2b; --accent:#5b8def; --text:#e7ecf5; --muted:#8b95a7; --good:#39d98a; --warn:#ffb454; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: var(--bg); color: var(--text); padding: 32px; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  p.sub { color: var(--muted); margin-top: 0; margin-bottom: 28px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .card { background: var(--card); border-radius: 12px; padding: 18px 20px; }
+  .card .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  .card .value { font-size: 28px; font-weight: 600; margin-top: 6px; }
+  .card .value.good { color: var(--good); }
+  .card .value.warn { color: var(--warn); }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 12px; overflow: hidden; }
+  th, td { text-align: left; padding: 10px 14px; font-size: 14px; }
+  th { color: var(--muted); font-weight: 500; border-bottom: 1px solid #232b3d; }
+  td { border-bottom: 1px solid #1e2534; }
+  .refresh { margin-bottom: 18px; color: var(--muted); font-size: 13px; }
+  button { background: var(--accent); border: none; color: white; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+</style>
+</head>
+<body>
+  <h1>AI Operations Automation — Metrics</h1>
+  <p class="sub">Live numbers pulled from <code>/api/metrics</code>. Run <code>data/generate_test_cases.py</code> then <code>data/run_test_cases.py</code> to populate this.</p>
+
+  <div class="grid" id="cards"></div>
+
+  <div class="refresh">
+    <button onclick="load()">Refresh</button>
+    <span id="ts"></span>
+  </div>
+
+  <table>
+    <thead><tr><th>Issue type</th><th>Cases</th></tr></thead>
+    <tbody id="breakdown"></tbody>
+  </table>
+
+<script>
+async function load() {
+  const res = await fetch('/api/metrics');
+  const m = await res.json();
+
+  const cards = [
+    { label: 'Cases processed', value: m.cases_processed ?? '—' },
+    { label: 'Avg. processing time', value: m.avg_processing_time_ms != null ? (m.avg_processing_time_ms/1000).toFixed(2) + 's' : '—' },
+    { label: 'Manual baseline', value: m.avg_manual_baseline_ms != null ? (m.avg_manual_baseline_ms/1000).toFixed(0) + 's' : '—' },
+    { label: 'Time saved', value: m.time_saved_pct != null ? m.time_saved_pct + '%' : '—', cls: 'good' },
+    { label: 'Escalation rate', value: m.escalation_rate_pct != null ? m.escalation_rate_pct + '%' : '—', cls: 'warn' },
+  ];
+
+  document.getElementById('cards').innerHTML = cards.map(c => `
+    <div class="card">
+      <div class="label">${c.label}</div>
+      <div class="value ${c.cls || ''}">${c.value}</div>
+    </div>
+  `).join('');
+
+  const rows = Object.entries(m.issue_type_breakdown || {});
+  document.getElementById('breakdown').innerHTML = rows.length
+    ? rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')
+    : '<tr><td colspan="2" style="color:#8b95a7">No cases yet</td></tr>';
+
+  document.getElementById('ts').textContent = 'Last updated ' + new Date().toLocaleTimeString();
+}
+load();
+setInterval(load, 5000);
+</script>
+</body>
+</html>
