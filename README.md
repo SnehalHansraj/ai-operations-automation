@@ -149,23 +149,4 @@ No other code changes needed — `backend/services/llm_service.py` is the only f
 
 The agent extracts the order number, classifies it as `delayed_delivery`, calls the shipment-status API, checks business rules (auto-respond vs. escalate based on how many days late / customs hold), generates a contextual reply, logs the case, and notifies the ops channel — end to end in well under a second.
 
-## Suggested CV entry
 
-```
-AI Operations Automation Agent
-Python, FastAPI, LLMs, Agentic AI, Make.com, PostgreSQL, REST APIs, Docker
-
-- Built an AI-powered operations workflow that converts unstructured requests
-  into structured actions using LLMs, Python, and REST APIs.
-- Automated request classification, data extraction, and database updates
-  through an agentic workflow (LLM -> order API -> business rules -> response)
-  and a Make.com automation scenario.
-- Integrated external APIs with FastAPI services to retrieve data, apply
-  business rules, and generate contextual responses, with full per-step
-  execution tracing for auditability.
-- Measured processing time, classification accuracy, and escalation rate
-  across a 100-case test dataset via an automated benchmark script and a
-  live metrics dashboard.
-- Containerized the full stack (API + PostgreSQL) with Docker Compose for
-  one-command setup.
-```
