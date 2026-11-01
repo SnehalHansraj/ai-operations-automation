@@ -1,6 +1,6 @@
-# AI Operations Automation Agent
+# OpsPilot: AI Operations Automation Agent
 
-An agentic AI pipeline that takes an unstructured incoming request (email, support ticket, chat message), classifies it, extracts structured data, looks up live order/shipment status, applies business rules, generates a response, notifies a human channel, and **measures its own performance** — built to demonstrate the exact stack used in logistics/ops-automation job descriptions (Python, FastAPI, LLMs, Agentic AI, Make.com, PostgreSQL, REST APIs, Docker).
+An agentic AI pipeline that takes an unstructured incoming request (email, support ticket, chat message), classifies it, extracts structured data, looks up live order/shipment status, applies business rules, generates a response, notifies a human channel, and **measures its own performance**. Stack: Python, FastAPI, LLMs (local Qwen3 via Ollama, routed through **LiteLLM**), Agentic AI, Make.com, PostgreSQL/SQLite, REST APIs, Docker.
 
 ## Architecture
 
@@ -13,16 +13,18 @@ Incoming Request (webhook / API call)
    ┌────┼────────────┬───────────────┐
    ▼    ▼             ▼               ▼
  LLM   Order API   Business Rules   Notifier
-(classify)  (status)   (decide)     (Slack/log)
+(classify)  (status)   (decide)   (Slack / email)
+   │
+   └─ LiteLLM → Ollama (Qwen3) | OpenAI | Anthropic
         │
         ▼
-   PostgreSQL (cases + full step-by-step trace)
+   PostgreSQL / SQLite (cases + full step-by-step trace)
         │
         ▼
    Metrics Dashboard (/dashboard)
 ```
 
-The agent doesn't just call an LLM once — it **decides at runtime** which tool to call next based on the previous tool's output (e.g. it escalates instead of auto-responding when business rules flag a customs hold or a 3+ day delay). Every step is logged to `agent_steps` for auditability.
+The agent doesn't just call an LLM once: it **decides at runtime** which tool to call next based on the previous tool's output (e.g. it escalates instead of auto-responding when business rules flag a customs hold or a 3+ day delay). Every step is logged to `agent_steps` for auditability.
 
 ## Project structure
 
@@ -30,7 +32,7 @@ The agent doesn't just call an LLM once — it **decides at runtime** which tool
 ai-operations-automation/
 ├── backend/
 │   ├── main.py              # FastAPI app entrypoint
-│   ├── agents/agent.py      # orchestration — the "agentic" core
+│   ├── agents/agent.py      # orchestration: the "agentic" core
 │   ├── api/routes.py        # /api/requests, /api/cases, /api/metrics
 │   ├── services/            # llm_service, order_service, notification_service
 │   ├── models/models.py     # SQLAlchemy models (Case, AgentStep)
@@ -39,24 +41,55 @@ ai-operations-automation/
 │   └── make-workflow.json   # Make.com scenario blueprint + rebuild steps
 ├── data/
 │   ├── generate_test_cases.py
-│   └── run_test_cases.py    # runs 100 cases against the live API, prints real metrics
+│   ├── run_test_cases.py    # runs 100 cases against the live API, prints metrics
+│   └── run_demo_cases.py    # 8 curated end-to-end demo scenarios
 ├── dashboard/index.html     # live metrics dashboard
-├── tests/test_agent.py      # unit tests, no Docker needed
+├── tests/
+│   ├── test_agent.py        # unit tests for the agent pipeline
+│   ├── test_litellm.py      # LiteLLM provider tests (offline, no model needed)
+│   └── test_email.py        # manual SMTP check (sends a real email)
 ├── Dockerfile
 ├── docker-compose.yml
 ├── requirements.txt
 └── .env.example
 ```
 
-## Quick start (Docker — recommended)
+## LLM providers (via LiteLLM)
 
-Needs only Docker + Docker Compose installed. No API keys required to run it end-to-end (uses the built-in rule-based "mock" LLM provider).
+`backend/services/llm_service.py` is the only file that branches on provider. Choose one in `.env`:
+
+| `LLM_PROVIDER` | What it does |
+|---|---|
+| `litellm` | Calls go through [LiteLLM](https://github.com/BerriAI/litellm)'s unified API. Default model: local `qwen3:4b` on Ollama |
+| `ollama` | Calls Ollama's REST API directly |
+| `openai` / `anthropic` | Cloud models via their official SDKs |
+| `mock` | Deterministic rule-based classifier: no model, no keys, zero cost |
+
+With `litellm`, switching models is one env variable, with no code change:
+
+```
+LLM_PROVIDER=litellm
+LITELLM_MODEL=ollama_chat/qwen3:4b          # default (local, private, free)
+# LITELLM_MODEL=gpt-4o-mini                 # + OPENAI_API_KEY
+# LITELLM_MODEL=anthropic/claude-sonnet-4-6 # + ANTHROPIC_API_KEY
+```
+
+The LiteLLM path reuses the same prompts, JSON extraction and validation as the direct Ollama path, and strips Qwen3's `<think>` blocks before parsing.
+
+## Running locally
+
+Needs Python 3.11+ and [Ollama](https://ollama.com) with the model pulled (`ollama pull qwen3:4b`). To run without a model, set `LLM_PROVIDER=mock`.
 
 ```bash
-cd ai-operations-automation
-cp .env.example .env
-docker compose up --build
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+
+cp .env.example .env   # defaults to a local SQLite file, no Postgres needed
+
+uvicorn backend.main:app --reload
 ```
+
+(To use Postgres instead of SQLite, edit `.env` and uncomment the `DATABASE_URL=postgresql://...` line.)
 
 Once it's up:
 
@@ -72,81 +105,52 @@ curl -X POST http://localhost:8000/api/requests \
   -d '{"text": "My package hasn'"'"'t arrived yet. Order #12345 was supposed to arrive yesterday."}'
 ```
 
-You'll get back the classified issue type, the order status, the generated response, and the processing time — refresh `/dashboard` to see it reflected in the metrics.
+You'll get back the classified issue type, the order status, the generated response, and the processing time. Refresh `/dashboard` to see it reflected in the metrics.
 
-## Running the 100-case measured benchmark
-
-This is what generates the real (not fabricated) numbers for your resume/portfolio.
+## Running with Docker
 
 ```bash
-# with the API already running via docker compose:
-pip install httpx
+cp .env.example .env
+docker compose up --build
+```
+
+Inside the container `localhost` is the container itself, so to reach Ollama on your machine set `OLLAMA_BASE_URL=http://host.docker.internal:11434` in `.env` (or use `LLM_PROVIDER=mock`).
+
+## Tests
+
+```bash
+pip install pytest
+python -m pytest tests/test_agent.py tests/test_litellm.py -v
+```
+
+These need no database, no Ollama and no API keys: `test_litellm.py` uses LiteLLM's built-in `mock_response`, so the real `litellm.completion()` path runs offline.
+
+`tests/test_email.py` is a manual SMTP check that sends a real email using the `SMTP_*` settings in `.env`: run it with `python tests/test_email.py`.
+
+## Measured benchmark (100 cases)
+
+```bash
+# with the API running:
 python data/generate_test_cases.py     # writes data/test_cases.csv (100 rows)
 python data/run_test_cases.py --base-url http://localhost:8000
 ```
 
-It prints something like:
+It reports classification accuracy, average and P95 processing time, escalation rate, and time saved versus a 5-minute manual baseline, all measured from the actual run.
 
-```
-=== Results ===
-Cases processed:            100
-Classification accuracy:    91.0%
-Avg. processing time:       0.04s
-P95 processing time:        0.09s
-Escalation rate:            18.0%
-Time saved vs 5-min manual: 99.9%
-```
-
-...and a ready-to-paste CV line at the bottom. **These are your own real numbers from your own run** — re-run it and quote whatever you actually get, don't copy the example above verbatim.
-
-## Running locally without Docker
+For a short guided walkthrough of 8 scenarios (auto-resolution, delay, damage, wrong item, refund, cancellation, customs escalation with email, missing order ID):
 
 ```bash
-python -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-
-cp .env.example .env   # defaults to a local SQLite file — no Postgres needed
-
-uvicorn backend.main:app --reload --app-dir .
+python data/run_demo_cases.py
 ```
-
-(To use Postgres instead of SQLite locally, edit `.env` and uncomment the `DATABASE_URL=postgresql://...` line, pointing it at your own Postgres instance.)
-
-Run unit tests (no DB needed):
-
-```bash
-pip install pytest
-pytest tests/
-```
-
-## Switching to a real LLM
-
-By default `LLM_PROVIDER=mock` in `.env` — a deterministic rule-based classifier that mimics exactly what an LLM call returns, so the project runs with zero cost and zero keys. To use a real model:
-
-```
-LLM_PROVIDER=openai
-OPENAI_API_KEY=sk-...
-```
-
-or
-
-```
-LLM_PROVIDER=anthropic
-ANTHROPIC_API_KEY=sk-ant-...
-```
-
-No other code changes needed — `backend/services/llm_service.py` is the only file that branches on provider.
 
 ## Make.com integration
 
-`automation/make-workflow.json` documents the scenario: **Webhook → HTTP (calls this API) → Router (resolved/escalated) → Slack notify → Google Sheets log**. Make.com scenarios are built in their visual editor, not imported from raw JSON, so this file is a precise blueprint plus step-by-step rebuild instructions — open it and follow "how_to_rebuild_in_make" to recreate it in ~10 minutes with a free Make.com account, using this API's `/api/requests` endpoint as the HTTP module's target (use `ngrok http 8000` to expose your local API for testing).
+`automation/make-workflow.json` documents the scenario: **Webhook → HTTP (calls this API) → Router (resolved/escalated) → Slack notify → Google Sheets log**. Make.com scenarios are built in their visual editor, not imported from raw JSON, so this file is a precise blueprint plus step-by-step rebuild instructions. Follow "how_to_rebuild_in_make" to recreate it in ~10 minutes with a free Make.com account, using this API's `/api/requests` endpoint as the HTTP module's target (use `ngrok http 8000` to expose your local API for testing).
 
-## Example use case this was built for
+## Example use case
 
-**E-commerce / logistics delayed-delivery automation** (directly relevant to logistics/cross-border-parcel companies):
+**E-commerce / logistics delayed-delivery automation:**
 
 > "My package hasn't arrived yet. Order #12345 was supposed to arrive yesterday."
 
-The agent extracts the order number, classifies it as `delayed_delivery`, calls the shipment-status API, checks business rules (auto-respond vs. escalate based on how many days late / customs hold), generates a contextual reply, logs the case, and notifies the ops channel — end to end in well under a second.
-
-
+The agent extracts the order number, classifies it as `delayed_delivery`, calls the shipment-status API, checks business rules (auto-respond vs. escalate based on how many days late / customs hold), generates a contextual reply, logs the case, and notifies the ops channel by Slack or email.
