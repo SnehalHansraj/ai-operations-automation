@@ -2,72 +2,2987 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Ops Automation — Metrics Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<title>OpsPilot — AI Operations Control Center</title>
+
 <style>
-  :root { --bg:#0f1420; --card:#171d2b; --accent:#5b8def; --text:#e7ecf5; --muted:#8b95a7; --good:#39d98a; --warn:#ffb454; }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: var(--bg); color: var(--text); padding: 32px; }
-  h1 { font-size: 22px; margin-bottom: 4px; }
-  p.sub { color: var(--muted); margin-top: 0; margin-bottom: 28px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
-  .card { background: var(--card); border-radius: 12px; padding: 18px 20px; }
-  .card .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
-  .card .value { font-size: 28px; font-weight: 600; margin-top: 6px; }
-  .card .value.good { color: var(--good); }
-  .card .value.warn { color: var(--warn); }
-  table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 12px; overflow: hidden; }
-  th, td { text-align: left; padding: 10px 14px; font-size: 14px; }
-  th { color: var(--muted); font-weight: 500; border-bottom: 1px solid #232b3d; }
-  td { border-bottom: 1px solid #1e2534; }
-  .refresh { margin-bottom: 18px; color: var(--muted); font-size: 13px; }
-  button { background: var(--accent); border: none; color: white; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+  :root {
+    --bg: #0b0f17;
+    --sidebar: #0d121c;
+    --panel: #121925;
+    --panel-2: #161e2c;
+    --border: #222c3d;
+
+    --text: #f4f7fb;
+    --muted: #8b96a8;
+
+    --blue: #5b8def;
+    --blue-soft: rgba(91, 141, 239, 0.12);
+
+    --green: #35d48a;
+    --green-soft: rgba(53, 212, 138, 0.12);
+
+    --yellow: #f5b74f;
+    --yellow-soft: rgba(245, 183, 79, 0.12);
+
+    --red: #ff6b6b;
+    --red-soft: rgba(255, 107, 107, 0.12);
+
+    --shadow: 0 12px 35px rgba(0, 0, 0, 0.18);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    margin: 0;
+    min-height: 100%;
+    font-family:
+      Inter,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      sans-serif;
+
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  button,
+  textarea {
+    font-family: inherit;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  /* --------------------------------------------------------------
+     APP LAYOUT
+  -------------------------------------------------------------- */
+
+  .app {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    width: 235px;
+    background: var(--sidebar);
+    border-right: 1px solid var(--border);
+
+    display: flex;
+    flex-direction: column;
+
+    padding: 24px 16px;
+
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+
+    padding: 0 10px;
+    margin-bottom: 32px;
+  }
+
+  .brand-icon {
+    width: 36px;
+    height: 36px;
+
+    border-radius: 10px;
+
+    background: var(--blue);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-weight: 800;
+    font-size: 17px;
+  }
+
+  .brand-name {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+
+  .brand-sub {
+    color: var(--muted);
+    font-size: 10px;
+    margin-top: 2px;
+  }
+
+  .nav-label {
+    color: #596578;
+
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+
+    padding: 0 10px;
+    margin-bottom: 8px;
+  }
+
+  .nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .nav button {
+    width: 100%;
+
+    border: none;
+    background: transparent;
+
+    color: var(--muted);
+
+    text-align: left;
+
+    padding: 11px 12px;
+    border-radius: 8px;
+
+    font-size: 13px;
+  }
+
+  .nav button:hover {
+    background: var(--panel);
+    color: var(--text);
+  }
+
+  .nav button.active {
+    background: var(--blue-soft);
+    color: #8db1ff;
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+
+    padding: 14px 10px;
+
+    border-top: 1px solid var(--border);
+  }
+
+  .agent-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+
+    border-radius: 50%;
+
+    background: var(--green);
+
+    box-shadow: 0 0 10px rgba(53, 212, 138, 0.6);
+  }
+
+  /* --------------------------------------------------------------
+     MAIN
+  -------------------------------------------------------------- */
+
+  .main {
+    margin-left: 235px;
+    width: calc(100% - 235px);
+
+    padding: 28px 34px 50px;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    margin-bottom: 28px;
+  }
+
+  .page-title {
+    font-size: 25px;
+    font-weight: 700;
+
+    margin: 0;
+    letter-spacing: -0.5px;
+  }
+
+  .page-subtitle {
+    color: var(--muted);
+
+    font-size: 13px;
+
+    margin-top: 7px;
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+
+    padding: 8px 11px;
+
+    border-radius: 7px;
+
+    background: var(--green-soft);
+
+    color: var(--green);
+
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .refresh-btn {
+    background: var(--panel);
+    color: var(--muted);
+
+    border: 1px solid var(--border);
+
+    padding: 8px 12px;
+    border-radius: 7px;
+
+    font-size: 12px;
+  }
+
+  .refresh-btn:hover {
+    color: var(--text);
+    border-color: #354258;
+  }
+
+  /* --------------------------------------------------------------
+     VIEWS
+  -------------------------------------------------------------- */
+
+  .view {
+    display: none;
+  }
+
+  .view.active {
+    display: block;
+  }
+
+  /* --------------------------------------------------------------
+     METRIC CARDS
+  -------------------------------------------------------------- */
+
+  .metrics {
+    display: grid;
+
+    grid-template-columns:
+      repeat(4, minmax(0, 1fr));
+
+    gap: 14px;
+
+    margin-bottom: 22px;
+  }
+
+  .metric-card {
+    background: var(--panel);
+
+    border: 1px solid var(--border);
+
+    border-radius: 10px;
+
+    padding: 18px;
+
+    box-shadow: var(--shadow);
+  }
+
+  .metric-label {
+    color: var(--muted);
+
+    font-size: 11px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.06em;
+  }
+
+  .metric-value {
+    font-size: 27px;
+
+    font-weight: 700;
+
+    margin-top: 9px;
+
+    letter-spacing: -0.5px;
+  }
+
+  .metric-foot {
+    color: #687488;
+
+    font-size: 11px;
+
+    margin-top: 6px;
+  }
+
+  .metric-green {
+    color: var(--green);
+  }
+
+  .metric-yellow {
+    color: var(--yellow);
+  }
+
+  /* --------------------------------------------------------------
+     GRID
+  -------------------------------------------------------------- */
+
+  .content-grid {
+    display: grid;
+
+    grid-template-columns:
+      minmax(0, 1.5fr)
+      minmax(300px, 0.8fr);
+
+    gap: 18px;
+  }
+
+  .panel {
+    background: var(--panel);
+
+    border: 1px solid var(--border);
+
+    border-radius: 10px;
+
+    overflow: hidden;
+  }
+
+  .panel-header {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    padding: 16px 18px;
+
+    border-bottom: 1px solid var(--border);
+  }
+
+  .panel-title {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .panel-subtitle {
+    color: var(--muted);
+
+    font-size: 11px;
+
+    margin-top: 3px;
+  }
+
+  .panel-body {
+    padding: 18px;
+  }
+
+  /* --------------------------------------------------------------
+     CASE TABLE
+  -------------------------------------------------------------- */
+
+  .case-table {
+    width: 100%;
+
+    border-collapse: collapse;
+  }
+
+  .case-table th {
+    color: #667287;
+
+    text-align: left;
+
+    font-size: 10px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.06em;
+
+    font-weight: 500;
+
+    padding: 10px 14px;
+
+    border-bottom: 1px solid var(--border);
+  }
+
+  .case-table td {
+    padding: 13px 14px;
+
+    border-bottom: 1px solid #1b2433;
+
+    font-size: 12px;
+  }
+
+  .case-table tbody tr {
+    cursor: pointer;
+  }
+
+  .case-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .case-id {
+    color: #8db1ff;
+    font-weight: 600;
+  }
+
+  .muted {
+    color: var(--muted);
+  }
+
+  /* --------------------------------------------------------------
+     STATUS
+  -------------------------------------------------------------- */
+
+  .status {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    padding: 5px 8px;
+
+    border-radius: 6px;
+
+    font-size: 10px;
+
+    font-weight: 600;
+  }
+
+  .status::before {
+    content: "";
+
+    width: 5px;
+    height: 5px;
+
+    border-radius: 50%;
+
+    background: currentColor;
+  }
+
+  .status-resolved {
+    background: var(--green-soft);
+    color: var(--green);
+  }
+
+  .status-escalated {
+    background: var(--red-soft);
+    color: var(--red);
+  }
+
+  /* --------------------------------------------------------------
+     ISSUE BREAKDOWN
+  -------------------------------------------------------------- */
+
+  .issue-row {
+    margin-bottom: 17px;
+  }
+
+  .issue-top {
+    display: flex;
+
+    justify-content: space-between;
+
+    font-size: 11px;
+
+    margin-bottom: 7px;
+  }
+
+  .issue-name {
+    color: #cbd3df;
+  }
+
+  .issue-count {
+    color: var(--muted);
+  }
+
+  .bar {
+    height: 5px;
+
+    border-radius: 20px;
+
+    background: #1e2736;
+
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+
+    border-radius: 20px;
+
+    background: var(--blue);
+
+    transition: width 0.5s ease;
+  }
+
+  /* --------------------------------------------------------------
+     NEW CASE
+  -------------------------------------------------------------- */
+
+  .case-form {
+    max-width: 850px;
+  }
+
+  .form-label {
+    display: block;
+
+    color: #cbd3df;
+
+    font-size: 12px;
+
+    margin-bottom: 8px;
+  }
+
+  textarea {
+    width: 100%;
+
+    min-height: 170px;
+
+    resize: vertical;
+
+    background: var(--panel);
+
+    color: var(--text);
+
+    border: 1px solid var(--border);
+
+    border-radius: 9px;
+
+    padding: 15px;
+
+    outline: none;
+
+    font-size: 13px;
+
+    line-height: 1.6;
+  }
+
+  textarea:focus {
+    border-color: var(--blue);
+  }
+
+  .form-actions {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    margin-top: 12px;
+  }
+
+  .primary-btn {
+    background: var(--blue);
+
+    color: white;
+
+    border: none;
+
+    border-radius: 7px;
+
+    padding: 10px 17px;
+
+    font-size: 12px;
+
+    font-weight: 600;
+  }
+
+  .primary-btn:hover {
+    filter: brightness(1.1);
+  }
+
+  .primary-btn:disabled {
+    opacity: 0.5;
+
+    cursor: not-allowed;
+  }
+
+  .example-btn {
+    background: transparent;
+
+    border: 1px solid var(--border);
+
+    color: var(--muted);
+
+    border-radius: 7px;
+
+    padding: 9px 12px;
+
+    font-size: 11px;
+  }
+
+  /* --------------------------------------------------------------
+     RESULT
+  -------------------------------------------------------------- */
+
+  .result {
+    margin-top: 22px;
+
+    display: none;
+  }
+
+  .result.show {
+    display: block;
+  }
+
+  .result-banner {
+    padding: 16px 18px;
+
+    border-radius: 9px;
+
+    margin-bottom: 14px;
+  }
+
+  .result-banner.resolved {
+    background: var(--green-soft);
+
+    border: 1px solid rgba(53, 212, 138, 0.2);
+  }
+
+  .result-banner.escalated {
+    background: var(--red-soft);
+
+    border: 1px solid rgba(255, 107, 107, 0.2);
+  }
+
+  .result-title {
+    font-size: 14px;
+
+    font-weight: 700;
+  }
+
+  .result-description {
+    color: var(--muted);
+
+    font-size: 12px;
+
+    margin-top: 5px;
+
+    line-height: 1.5;
+  }
+
+  .result-grid {
+    display: grid;
+
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+
+    gap: 12px;
+
+    margin-bottom: 14px;
+  }
+
+  .result-item {
+    background: var(--panel);
+
+    border: 1px solid var(--border);
+
+    border-radius: 8px;
+
+    padding: 13px;
+  }
+
+  .result-item-label {
+    color: var(--muted);
+
+    font-size: 10px;
+
+    text-transform: uppercase;
+  }
+
+  .result-item-value {
+    font-size: 13px;
+
+    margin-top: 6px;
+
+    font-weight: 600;
+  }
+
+  .response-box {
+    background: var(--panel);
+
+    border: 1px solid var(--border);
+
+    border-radius: 8px;
+
+    padding: 15px;
+
+    color: #cdd5e2;
+
+    font-size: 12px;
+
+    line-height: 1.6;
+  }
+
+  /* --------------------------------------------------------------
+     TRACE
+  -------------------------------------------------------------- */
+
+  .trace {
+    margin-top: 14px;
+  }
+
+  .trace-step {
+    display: flex;
+
+    gap: 12px;
+
+    padding: 12px 0;
+
+    border-bottom: 1px solid #1b2433;
+  }
+
+  .trace-step:last-child {
+    border-bottom: none;
+  }
+
+  .trace-number {
+    flex: 0 0 25px;
+
+    width: 25px;
+    height: 25px;
+
+    border-radius: 50%;
+
+    background: var(--blue-soft);
+
+    color: #8db1ff;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    font-size: 10px;
+
+    font-weight: 700;
+  }
+
+  .trace-content {
+    min-width: 0;
+  }
+
+  .trace-name {
+    font-size: 12px;
+
+    font-weight: 600;
+  }
+
+  .trace-detail {
+    color: var(--muted);
+
+    font-size: 11px;
+
+    line-height: 1.5;
+
+    margin-top: 3px;
+
+    word-break: break-word;
+  }
+
+  .trace-time {
+    color: #596578;
+
+    font-size: 10px;
+
+    margin-top: 4px;
+  }
+
+  /* --------------------------------------------------------------
+     CASE DETAIL
+  -------------------------------------------------------------- */
+
+  .back-btn {
+    background: transparent;
+
+    border: none;
+
+    color: #8db1ff;
+
+    font-size: 12px;
+
+    padding: 0;
+
+    margin-bottom: 17px;
+  }
+
+  .case-header {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: flex-start;
+
+    margin-bottom: 20px;
+  }
+
+  .case-number {
+    color: var(--muted);
+
+    font-size: 11px;
+  }
+
+  .case-title {
+    font-size: 22px;
+
+    margin: 5px 0 0;
+  }
+
+  .customer-message {
+    background: var(--panel);
+
+    border: 1px solid var(--border);
+
+    border-radius: 9px;
+
+    padding: 16px;
+
+    color: #cbd3df;
+
+    font-size: 13px;
+
+    line-height: 1.6;
+
+    margin-bottom: 18px;
+  }
+
+  .decision-box {
+    border: 1px solid var(--border);
+
+    background: var(--panel);
+
+    border-radius: 9px;
+
+    padding: 18px;
+
+    margin-bottom: 18px;
+  }
+
+  .decision-label {
+    color: var(--muted);
+
+    font-size: 10px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.06em;
+  }
+
+  .decision-action {
+    font-size: 18px;
+
+    font-weight: 700;
+
+    margin-top: 7px;
+  }
+
+  .decision-detail {
+    color: var(--muted);
+
+    font-size: 12px;
+
+    line-height: 1.6;
+
+    margin-top: 7px;
+  }
+
+  /* --------------------------------------------------------------
+     LOADING / EMPTY / ERROR
+  -------------------------------------------------------------- */
+
+  .loading {
+    color: var(--muted);
+
+    padding: 25px;
+
+    text-align: center;
+
+    font-size: 12px;
+  }
+
+  .empty {
+    color: var(--muted);
+
+    padding: 25px 14px;
+
+    text-align: center;
+
+    font-size: 12px;
+  }
+
+  .error {
+    background: var(--red-soft);
+
+    border: 1px solid rgba(255, 107, 107, 0.2);
+
+    color: #ff9b9b;
+
+    padding: 12px;
+
+    border-radius: 7px;
+
+    font-size: 12px;
+
+    margin-top: 12px;
+  }
+
+  /* --------------------------------------------------------------
+     RESPONSIVE
+  -------------------------------------------------------------- */
+
+  @media (max-width: 1000px) {
+
+    .metrics {
+      grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+    }
+
+    .content-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 720px) {
+
+    .sidebar {
+      position: relative;
+
+      width: 100%;
+
+      height: auto;
+
+      padding: 15px;
+
+      border-right: none;
+
+      border-bottom: 1px solid var(--border);
+    }
+
+    .app {
+      display: block;
+    }
+
+    .main {
+      margin-left: 0;
+
+      width: 100%;
+
+      padding: 20px;
+    }
+
+    .nav {
+      flex-direction: row;
+    }
+
+    .sidebar-footer {
+      display: none;
+    }
+
+    .metrics {
+      grid-template-columns: 1fr;
+    }
+
+    .result-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .topbar {
+      flex-direction: column;
+
+      gap: 14px;
+    }
+
+    .case-table {
+      min-width: 650px;
+    }
+
+    .panel {
+      overflow-x: auto;
+    }
+  }
 </style>
 </head>
+
 <body>
-  <h1>AI Operations Automation — Metrics</h1>
-  <p class="sub">Live numbers pulled from <code>/api/metrics</code>. Run <code>data/generate_test_cases.py</code> then <code>data/run_test_cases.py</code> to populate this.</p>
 
-  <div class="grid" id="cards"></div>
+<div class="app">
 
-  <div class="refresh">
-    <button onclick="load()">Refresh</button>
-    <span id="ts"></span>
-  </div>
+  <!-- ============================================================
+       SIDEBAR
+  ============================================================ -->
 
-  <table>
-    <thead><tr><th>Issue type</th><th>Cases</th></tr></thead>
-    <tbody id="breakdown"></tbody>
-  </table>
+  <aside class="sidebar">
+
+    <div class="brand">
+
+      <div class="brand-icon">
+        O
+      </div>
+
+      <div>
+        <div class="brand-name">
+          OpsPilot
+        </div>
+
+        <div class="brand-sub">
+          AI OPERATIONS
+        </div>
+      </div>
+
+    </div>
+
+
+    <div class="nav-label">
+      Workspace
+    </div>
+
+    <nav class="nav">
+
+      <button
+        class="active"
+        onclick="showView('overview', this)"
+      >
+        Overview
+      </button>
+
+      <button
+        onclick="showView('new-case', this)"
+      >
+        New Case
+      </button>
+
+      <button
+        onclick="showView('cases', this)"
+      >
+        Cases
+      </button>
+
+    </nav>
+
+
+    <div class="sidebar-footer">
+
+      <div class="agent-status">
+
+        <span class="status-dot"></span>
+
+        Agent online
+
+      </div>
+
+      <div
+        style="
+          color:#596578;
+          font-size:10px;
+          margin-top:6px;
+        "
+      >
+        Ollama · Qwen3:4b
+      </div>
+
+    </div>
+
+  </aside>
+
+
+  <!-- ============================================================
+       MAIN
+  ============================================================ -->
+
+  <main class="main">
+
+    <header class="topbar">
+
+      <div>
+
+        <h1
+          class="page-title"
+          id="page-title"
+        >
+          Operations Overview
+        </h1>
+
+        <div class="page-subtitle">
+          Monitor AI-driven operational cases and agent decisions.
+        </div>
+
+      </div>
+
+
+      <div class="topbar-right">
+
+        <div class="live-badge">
+
+          <span class="status-dot"></span>
+
+          LIVE
+
+        </div>
+
+        <button
+          class="refresh-btn"
+          onclick="loadDashboard()"
+        >
+          Refresh
+        </button>
+
+      </div>
+
+    </header>
+
+
+    <!-- ==========================================================
+         OVERVIEW
+    ========================================================== -->
+
+    <section
+      id="view-overview"
+      class="view active"
+    >
+
+      <div
+        class="metrics"
+        id="metrics"
+      >
+
+        <div class="metric-card">
+          <div class="metric-label">
+            Cases processed
+          </div>
+
+          <div class="metric-value">
+            —
+          </div>
+        </div>
+
+      </div>
+
+
+      <div class="content-grid">
+
+        <!-- Recent cases -->
+
+        <div class="panel">
+
+          <div class="panel-header">
+
+            <div>
+
+              <div class="panel-title">
+                Recent Cases
+              </div>
+
+              <div class="panel-subtitle">
+                Latest operational requests handled by the agent
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div style="overflow-x:auto;">
+
+            <table class="case-table">
+
+              <thead>
+
+                <tr>
+
+                  <th>Case</th>
+
+                  <th>Order</th>
+
+                  <th>Issue</th>
+
+                  <th>Status</th>
+
+                  <th>Time</th>
+
+                </tr>
+
+              </thead>
+
+              <tbody id="recent-cases">
+
+                <tr>
+                  <td colspan="5">
+                    <div class="loading">
+                      Loading cases...
+                    </div>
+                  </td>
+                </tr>
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+
+        <!-- Issue breakdown -->
+
+        <div class="panel">
+
+          <div class="panel-header">
+
+            <div>
+
+              <div class="panel-title">
+                Issue Breakdown
+              </div>
+
+              <div class="panel-subtitle">
+                Request categories
+              </div>
+
+            </div>
+
+          </div>
+
+          <div
+            class="panel-body"
+            id="breakdown"
+          >
+
+            <div class="empty">
+              Loading...
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ==========================================================
+         NEW CASE
+    ========================================================== -->
+
+    <section
+      id="view-new-case"
+      class="view"
+    >
+
+      <div class="panel">
+
+        <div class="panel-header">
+
+          <div>
+
+            <div class="panel-title">
+              Run Agent
+            </div>
+
+            <div class="panel-subtitle">
+              Submit a customer or operations request
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="panel-body">
+
+          <div class="case-form">
+
+            <label class="form-label">
+              Customer request
+            </label>
+
+            <textarea
+              id="request-text"
+              placeholder="Example: My order #12345 has not arrived yet and it is already two days late."
+            ></textarea>
+
+
+            <div class="form-actions">
+
+              <button
+                class="primary-btn"
+                id="run-btn"
+                onclick="runAgent()"
+              >
+                Run Agent
+              </button>
+
+              <button
+                class="example-btn"
+                onclick="useExample()"
+              >
+                Use example
+              </button>
+
+            </div>
+
+
+            <div id="request-error"></div>
+
+
+            <div
+              class="result"
+              id="agent-result"
+            >
+
+              <!-- Result gets rendered here -->
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ==========================================================
+         CASES
+    ========================================================== -->
+
+    <section
+      id="view-cases"
+      class="view"
+    >
+
+      <div class="panel">
+
+        <div class="panel-header">
+
+          <div>
+
+            <div class="panel-title">
+              All Cases
+            </div>
+
+            <div class="panel-subtitle">
+              Operational requests processed by OpsPilot
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div style="overflow-x:auto;">
+
+          <table class="case-table">
+
+            <thead>
+
+              <tr>
+
+                <th>Case</th>
+                <th>Order</th>
+                <th>Issue</th>
+                <th>Status</th>
+                <th>Processing time</th>
+                <th>Created</th>
+
+              </tr>
+
+            </thead>
+
+            <tbody id="all-cases">
+
+              <tr>
+
+                <td colspan="6">
+
+                  <div class="loading">
+                    Loading cases...
+                  </div>
+
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ==========================================================
+         CASE DETAIL
+    ========================================================== -->
+
+    <section
+      id="view-case-detail"
+      class="view"
+    >
+
+      <button
+        class="back-btn"
+        onclick="showView('cases')"
+      >
+        ← Back to cases
+      </button>
+
+
+      <div id="case-detail">
+
+        <div class="loading">
+          Loading case...
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+</div>
+
 
 <script>
-async function load() {
-  const res = await fetch('/api/metrics');
-  const m = await res.json();
 
-  const cards = [
-    { label: 'Cases processed', value: m.cases_processed ?? '—' },
-    { label: 'Avg. processing time', value: m.avg_processing_time_ms != null ? (m.avg_processing_time_ms/1000).toFixed(2) + 's' : '—' },
-    { label: 'Manual baseline', value: m.avg_manual_baseline_ms != null ? (m.avg_manual_baseline_ms/1000).toFixed(0) + 's' : '—' },
-    { label: 'Time saved', value: m.time_saved_pct != null ? m.time_saved_pct + '%' : '—', cls: 'good' },
-    { label: 'Escalation rate', value: m.escalation_rate_pct != null ? m.escalation_rate_pct + '%' : '—', cls: 'warn' },
-  ];
+  /* ==============================================================
+     STATE
+  ============================================================== */
 
-  document.getElementById('cards').innerHTML = cards.map(c => `
-    <div class="card">
-      <div class="label">${c.label}</div>
-      <div class="value ${c.cls || ''}">${c.value}</div>
-    </div>
-  `).join('');
+  let currentCases = [];
 
-  const rows = Object.entries(m.issue_type_breakdown || {});
-  document.getElementById('breakdown').innerHTML = rows.length
-    ? rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')
-    : '<tr><td colspan="2" style="color:#8b95a7">No cases yet</td></tr>';
 
-  document.getElementById('ts').textContent = 'Last updated ' + new Date().toLocaleTimeString();
-}
-load();
-setInterval(load, 5000);
+  /* ==============================================================
+     NAVIGATION
+  ============================================================== */
+
+  function showView(viewName, button) {
+
+    document
+      .querySelectorAll(".view")
+      .forEach(view => {
+        view.classList.remove("active");
+      });
+
+
+    const target =
+      document.getElementById(
+        "view-" + viewName
+      );
+
+    if (target) {
+      target.classList.add("active");
+    }
+
+
+    if (button) {
+
+      document
+        .querySelectorAll(".nav button")
+        .forEach(btn => {
+          btn.classList.remove("active");
+        });
+
+      button.classList.add("active");
+    }
+
+
+    const titles = {
+
+      overview: "Operations Overview",
+
+      "new-case": "Run New Case",
+
+      cases: "Operational Cases",
+
+      "case-detail": "Case Investigation"
+
+    };
+
+
+    document.getElementById(
+      "page-title"
+    ).textContent =
+      titles[viewName] || "Operations Overview";
+
+
+    if (viewName === "cases") {
+      loadCases();
+    }
+  }
+
+
+  /* ==============================================================
+     DASHBOARD
+  ============================================================== */
+
+  async function loadDashboard() {
+
+    try {
+
+      const metricsResponse =
+        await fetch("/api/metrics");
+
+      const metrics =
+        await metricsResponse.json();
+
+
+      renderMetrics(metrics);
+
+      renderBreakdown(
+        metrics.issue_type_breakdown || {}
+      );
+
+
+      await loadRecentCases();
+
+    } catch (error) {
+
+      console.error(
+        "Dashboard error:",
+        error
+      );
+
+    }
+
+  }
+
+
+  /* ==============================================================
+     METRICS
+  ============================================================== */
+
+  function renderMetrics(m) {
+
+    const autoRate =
+      m.auto_resolution_rate_pct != null
+        ? m.auto_resolution_rate_pct + "%"
+        : "—";
+
+
+    const escalationRate =
+      m.escalation_rate_pct != null
+        ? m.escalation_rate_pct + "%"
+        : "—";
+
+
+    const avgTime =
+      m.avg_processing_time_ms != null
+        ? formatDuration(
+            m.avg_processing_time_ms
+          )
+        : "—";
+
+
+    const timeSaved =
+      m.time_saved_pct != null
+        ? m.time_saved_pct + "%"
+        : "—";
+
+
+    const cards = [
+
+      {
+        label: "Cases processed",
+
+        value:
+          m.cases_processed ?? "—",
+
+        foot:
+          "Total requests handled",
+
+        cls: ""
+      },
+
+      {
+        label: "Auto-resolution",
+
+        value:
+          autoRate,
+
+        foot:
+          "Cases completed automatically",
+
+        cls: "metric-green"
+      },
+
+      {
+        label: "Escalations",
+
+        value:
+          escalationRate,
+
+        foot:
+          "Cases requiring human review",
+
+        cls: "metric-yellow"
+      },
+
+      {
+        label: "Avg. processing",
+
+        value:
+          avgTime,
+
+        foot:
+          "End-to-end agent runtime",
+
+        cls: ""
+      }
+
+    ];
+
+
+    document.getElementById(
+      "metrics"
+    ).innerHTML = cards.map(card => `
+
+      <div class="metric-card">
+
+        <div class="metric-label">
+          ${escapeHtml(card.label)}
+        </div>
+
+        <div class="metric-value ${card.cls}">
+          ${escapeHtml(String(card.value))}
+        </div>
+
+        <div class="metric-foot">
+          ${escapeHtml(card.foot)}
+        </div>
+
+      </div>
+
+    `).join("");
+
+  }
+
+
+  /* ==============================================================
+     ISSUE BREAKDOWN
+  ============================================================== */
+
+  function renderBreakdown(data) {
+
+    const container =
+      document.getElementById(
+        "breakdown"
+      );
+
+
+    const entries =
+      Object.entries(data);
+
+
+    if (!entries.length) {
+
+      container.innerHTML = `
+        <div class="empty">
+          No cases yet
+        </div>
+      `;
+
+      return;
+    }
+
+
+    const max =
+      Math.max(
+        ...entries.map(
+          ([, value]) => value
+        )
+      );
+
+
+    container.innerHTML =
+      entries.map(
+        ([name, count]) => {
+
+          const percentage =
+            max > 0
+              ? (count / max) * 100
+              : 0;
+
+
+          return `
+
+            <div class="issue-row">
+
+              <div class="issue-top">
+
+                <span class="issue-name">
+                  ${escapeHtml(
+                    formatIssueType(name)
+                  )}
+                </span>
+
+                <span class="issue-count">
+                  ${count}
+                </span>
+
+              </div>
+
+              <div class="bar">
+
+                <div
+                  class="bar-fill"
+                  style="width:${percentage}%"
+                ></div>
+
+              </div>
+
+            </div>
+
+          `;
+
+        }
+      ).join("");
+
+  }
+
+
+  /* ==============================================================
+     RECENT CASES
+  ============================================================== */
+
+  async function loadRecentCases() {
+
+    const response =
+      await fetch(
+        "/api/cases?limit=8"
+      );
+
+    currentCases =
+      await response.json();
+
+
+    renderCaseTable(
+      currentCases,
+      "recent-cases",
+      false
+    );
+
+  }
+
+
+  /* ==============================================================
+     ALL CASES
+  ============================================================== */
+
+  async function loadCases() {
+
+    const container =
+      document.getElementById(
+        "all-cases"
+      );
+
+
+    container.innerHTML = `
+      <tr>
+        <td colspan="6">
+          <div class="loading">
+            Loading cases...
+          </div>
+        </td>
+      </tr>
+    `;
+
+
+    try {
+
+      const response =
+        await fetch(
+          "/api/cases?limit=100"
+        );
+
+      const cases =
+        await response.json();
+
+
+      currentCases = cases;
+
+
+      renderCaseTable(
+        cases,
+        "all-cases",
+        true
+      );
+
+    } catch (error) {
+
+      container.innerHTML = `
+        <tr>
+          <td colspan="6">
+            <div class="error">
+              Unable to load cases.
+            </div>
+          </td>
+        </tr>
+      `;
+
+    }
+
+  }
+
+
+  /* ==============================================================
+     CASE TABLE
+  ============================================================== */
+
+  function renderCaseTable(
+    cases,
+    elementId,
+    showDate
+  ) {
+
+    const container =
+      document.getElementById(
+        elementId
+      );
+
+
+    if (!cases.length) {
+
+      const columns =
+        showDate ? 6 : 5;
+
+
+      container.innerHTML = `
+        <tr>
+          <td colspan="${columns}">
+            <div class="empty">
+              No cases yet
+            </div>
+          </td>
+        </tr>
+      `;
+
+      return;
+    }
+
+
+    container.innerHTML =
+      cases.map(
+        c => {
+
+          const statusClass =
+            c.status === "escalated"
+              ? "status-escalated"
+              : "status-resolved";
+
+
+          const statusText =
+            c.status === "escalated"
+              ? "Human review"
+              : "Resolved";
+
+
+          const date =
+            c.created_at
+              ? new Date(
+                  c.created_at
+                ).toLocaleString()
+              : "—";
+
+
+          return `
+
+            <tr
+              onclick="openCase('${escapeAttribute(c.id)}')"
+            >
+
+              <td>
+
+                <span class="case-id">
+                  #${escapeHtml(
+                    shortId(c.id)
+                  )}
+                </span>
+
+              </td>
+
+
+              <td>
+                ${c.order_id
+                  ? "#" +
+                    escapeHtml(
+                      String(c.order_id)
+                    )
+                  : '<span class="muted">—</span>'
+                }
+              </td>
+
+
+              <td>
+                ${escapeHtml(
+                  formatIssueType(
+                    c.issue_type
+                  )
+                )}
+              </td>
+
+
+              <td>
+
+                <span
+                  class="status ${statusClass}"
+                >
+                  ${statusText}
+                </span>
+
+              </td>
+
+
+              <td class="muted">
+                ${formatDuration(
+                  c.processing_time_ms
+                )}
+              </td>
+
+
+              ${
+                showDate
+                  ? `
+                    <td class="muted">
+                      ${escapeHtml(date)}
+                    </td>
+                  `
+                  : ""
+              }
+
+            </tr>
+
+          `;
+
+        }
+      ).join("");
+
+  }
+
+
+  /* ==============================================================
+     NEW CASE
+  ============================================================== */
+
+  async function runAgent() {
+
+    const input =
+      document.getElementById(
+        "request-text"
+      );
+
+    const button =
+      document.getElementById(
+        "run-btn"
+      );
+
+    const result =
+      document.getElementById(
+        "agent-result"
+      );
+
+    const error =
+      document.getElementById(
+        "request-error"
+      );
+
+
+    const text =
+      input.value.trim();
+
+
+    error.innerHTML = "";
+
+
+    if (!text) {
+
+      error.innerHTML = `
+        <div class="error">
+          Please enter a customer request.
+        </div>
+      `;
+
+      return;
+    }
+
+
+    button.disabled = true;
+
+    button.textContent =
+      "Agent processing...";
+
+
+    result.classList.remove(
+      "show"
+    );
+
+
+    result.innerHTML = `
+      <div class="panel">
+
+        <div class="loading">
+
+          <div style="font-size:20px;margin-bottom:8px;">
+            ◌
+          </div>
+
+          OpsPilot is investigating the request...
+          <br>
+
+          <span style="font-size:10px;">
+            Qwen3:4b → Tools → Policy → Decision
+          </span>
+
+        </div>
+
+      </div>
+    `;
+
+    result.classList.add(
+      "show"
+    );
+
+
+    try {
+
+      const response =
+        await fetch(
+          "/api/requests",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body: JSON.stringify({
+              text
+            })
+          }
+        );
+
+
+      if (!response.ok) {
+
+        throw new Error(
+          "Agent request failed"
+        );
+
+      }
+
+
+      const data =
+        await response.json();
+
+
+      renderAgentResult(
+        data
+      );
+
+
+      await loadDashboard();
+
+    } catch (err) {
+
+      result.innerHTML = `
+        <div class="error">
+          ${escapeHtml(
+            err.message ||
+            "Something went wrong."
+          )}
+        </div>
+      `;
+
+    } finally {
+
+      button.disabled = false;
+
+      button.textContent =
+        "Run Agent";
+
+    }
+
+  }
+
+
+  /* ==============================================================
+     AGENT RESULT
+  ============================================================== */
+
+  function renderAgentResult(
+    data
+  ) {
+
+    const result =
+      document.getElementById(
+        "agent-result"
+      );
+
+
+    const escalated =
+      data.status === "escalated";
+
+
+    const title =
+      escalated
+        ? "Human review required"
+        : "Case resolved automatically";
+
+
+    const description =
+      escalated
+        ? (
+          data.decision_reason ||
+          "The case requires operational review."
+        )
+        : (
+          data.decision_explanation ||
+          "The agent completed the case automatically."
+        );
+
+
+    result.innerHTML = `
+
+      <div
+        class="result-banner
+          ${escalated
+            ? "escalated"
+            : "resolved"}"
+      >
+
+        <div class="result-title">
+
+          ${escalated
+            ? "● " + title
+            : "✓ " + title}
+
+        </div>
+
+        <div class="result-description">
+
+          ${escapeHtml(
+            formatReason(
+              description
+            )
+          )}
+
+        </div>
+
+      </div>
+
+
+      <div class="result-grid">
+
+        <div class="result-item">
+
+          <div class="result-item-label">
+            Issue
+          </div>
+
+          <div class="result-item-value">
+            ${escapeHtml(
+              formatIssueType(
+                data.issue_type
+              )
+            )}
+          </div>
+
+        </div>
+
+
+        <div class="result-item">
+
+          <div class="result-item-label">
+            Order
+          </div>
+
+          <div class="result-item-value">
+
+            ${
+              data.order_id
+                ? "#" +
+                  escapeHtml(
+                    String(
+                      data.order_id
+                    )
+                  )
+                : "Not identified"
+            }
+
+          </div>
+
+        </div>
+
+
+        <div class="result-item">
+
+          <div class="result-item-label">
+            AI confidence
+          </div>
+
+          <div class="result-item-value">
+
+            ${
+              data.confidence != null
+                ? Math.round(
+                    data.confidence * 100
+                  ) + "%"
+                : "—"
+            }
+
+          </div>
+
+        </div>
+
+
+        <div class="result-item">
+
+          <div class="result-item-label">
+            Decision
+          </div>
+
+          <div class="result-item-value">
+
+            ${escapeHtml(
+              formatAction(
+                data.action
+              )
+            )}
+
+          </div>
+
+        </div>
+
+
+        <div class="result-item">
+
+          <div class="result-item-label">
+            Processing
+          </div>
+
+          <div class="result-item-value">
+
+            ${formatDuration(
+              data.processing_time_ms
+            )}
+
+          </div>
+
+        </div>
+
+
+        <div class="result-item">
+
+          <div class="result-item-label">
+            Verification
+          </div>
+
+          <div
+            class="result-item-value
+              ${data.verified
+                ? "metric-green"
+                : "metric-yellow"}"
+          >
+
+            ${data.verified
+              ? "✓ Verified"
+              : "Needs review"}
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div class="panel">
+
+        <div class="panel-header">
+
+          <div>
+
+            <div class="panel-title">
+              Customer Response
+            </div>
+
+            <div class="panel-subtitle">
+              Response generated by the operations agent
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="panel-body">
+
+          <div class="response-box">
+
+            ${escapeHtml(
+              data.response_text ||
+              "No response generated."
+            )}
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div class="panel trace">
+
+        <div class="panel-header">
+
+          <div>
+
+            <div class="panel-title">
+              Agent Investigation
+            </div>
+
+            <div class="panel-subtitle">
+              Step-by-step execution trace
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="panel-body">
+
+          ${
+            renderTrace(
+              data.trace || []
+            )
+          }
+
+        </div>
+
+      </div>
+
+    `;
+
+  }
+
+
+  /* ==============================================================
+     TRACE
+  ============================================================== */
+
+  function renderTrace(
+    trace
+  ) {
+
+    if (!trace.length) {
+
+      return `
+        <div class="empty">
+          No trace available.
+        </div>
+      `;
+
+    }
+
+
+    return trace.map(
+      step => `
+
+        <div class="trace-step">
+
+          <div class="trace-number">
+
+            ${step.step_number}
+
+          </div>
+
+
+          <div class="trace-content">
+
+            <div class="trace-name">
+
+              ${escapeHtml(
+                formatStepName(
+                  step.step_name
+                )
+              )}
+
+            </div>
+
+
+            <div class="trace-detail">
+
+              ${escapeHtml(
+                step.detail || ""
+              )}
+
+            </div>
+
+
+            <div class="trace-time">
+
+              ${formatDuration(
+                step.duration_ms
+              )}
+
+              ${
+                step.step_type
+                  ? " · " +
+                    escapeHtml(
+                      step.step_type
+                    )
+                  : ""
+              }
+
+            </div>
+
+          </div>
+
+        </div>
+
+      `
+    ).join("");
+
+  }
+
+
+  /* ==============================================================
+     CASE DETAIL
+  ============================================================== */
+
+  async function openCase(
+    caseId
+  ) {
+
+    showView(
+      "case-detail"
+    );
+
+
+    const container =
+      document.getElementById(
+        "case-detail"
+      );
+
+
+    container.innerHTML = `
+      <div class="loading">
+        Loading investigation...
+      </div>
+    `;
+
+
+    try {
+
+      const response =
+        await fetch(
+          "/api/cases/" +
+          encodeURIComponent(
+            caseId
+          )
+        );
+
+
+      const data =
+        await response.json();
+
+
+      if (data.error) {
+
+        throw new Error(
+          "Case not found"
+        );
+
+      }
+
+
+      renderCaseDetail(
+        data
+      );
+
+    } catch (error) {
+
+      container.innerHTML = `
+        <div class="error">
+          ${escapeHtml(
+            error.message
+          )}
+        </div>
+      `;
+
+    }
+
+  }
+
+
+  function renderCaseDetail(
+    data
+  ) {
+
+    const escalated =
+      data.status === "escalated";
+
+
+    const decision =
+      data.decision || {};
+
+
+    document.getElementById(
+      "case-detail"
+    ).innerHTML = `
+
+      <div class="case-header">
+
+        <div>
+
+          <div class="case-number">
+            CASE ${escapeHtml(
+              data.id
+            )}
+          </div>
+
+          <h2 class="case-title">
+
+            Order ${
+              data.order_id
+                ? "#" +
+                  escapeHtml(
+                    String(
+                      data.order_id
+                    )
+                  )
+                : "—"
+            }
+
+          </h2>
+
+        </div>
+
+
+        <span
+          class="status
+            ${
+              escalated
+                ? "status-escalated"
+                : "status-resolved"
+            }"
+        >
+
+          ${
+            escalated
+              ? "Human review"
+              : "Resolved"
+          }
+
+        </span>
+
+      </div>
+
+
+      <div class="customer-message">
+
+        <div
+          style="
+            color:#6f7b8e;
+            font-size:10px;
+            text-transform:uppercase;
+            margin-bottom:7px;
+          "
+        >
+          Customer request
+        </div>
+
+        ${escapeHtml(
+          data.raw_text || ""
+        )}
+
+      </div>
+
+
+      <div class="decision-box">
+
+        <div class="decision-label">
+          Agent Decision
+        </div>
+
+
+        <div
+          class="decision-action
+            ${escalated
+              ? "metric-yellow"
+              : "metric-green"}"
+        >
+
+          ${
+            escalated
+              ? "HUMAN REVIEW REQUIRED"
+              : "AUTO-RESOLVED"
+          }
+
+        </div>
+
+
+        <div class="decision-detail">
+
+          ${
+            decision.detail
+              ? escapeHtml(
+                  decision.detail
+                )
+              : "No decision details available."
+          }
+
+        </div>
+
+      </div>
+
+
+      <div class="panel">
+
+        <div class="panel-header">
+
+          <div>
+
+            <div class="panel-title">
+              Agent Investigation
+            </div>
+
+            <div class="panel-subtitle">
+              Complete execution trace
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="panel-body">
+
+          ${renderTrace(
+            data.trace || []
+          )}
+
+        </div>
+
+      </div>
+
+
+      <div
+        class="panel"
+        style="margin-top:18px;"
+      >
+
+        <div class="panel-header">
+
+          <div>
+
+            <div class="panel-title">
+              Final Response
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="panel-body">
+
+          <div class="response-box">
+
+            ${escapeHtml(
+              data.response_text ||
+              ""
+            )}
+
+          </div>
+
+        </div>
+
+      </div>
+
+    `;
+
+  }
+
+
+  /* ==============================================================
+     EXAMPLES
+  ============================================================== */
+
+  function useExample() {
+
+    document.getElementById(
+      "request-text"
+    ).value =
+      "My order #12345 has not arrived yet and it is already two days late.";
+
+  }
+
+
+  /* ==============================================================
+     HELPERS
+  ============================================================== */
+
+  function formatDuration(
+    milliseconds
+  ) {
+
+    if (
+      milliseconds == null ||
+      isNaN(milliseconds)
+    ) {
+      return "—";
+    }
+
+
+    const ms =
+      Number(milliseconds);
+
+
+    if (ms < 1000) {
+      return ms.toFixed(0) + " ms";
+    }
+
+
+    return (
+      ms / 1000
+    ).toFixed(1) + " s";
+
+  }
+
+
+  function formatIssueType(
+    value
+  ) {
+
+    if (!value) {
+      return "Unknown";
+    }
+
+
+    return value
+      .replaceAll("_", " ")
+      .replace(
+        /\b\w/g,
+        char =>
+          char.toUpperCase()
+      );
+
+  }
+
+
+  function formatAction(
+    value
+  ) {
+
+    if (!value) {
+      return "—";
+    }
+
+
+    const labels = {
+
+      escalate:
+        "Human review",
+
+      auto_respond:
+        "Auto-resolve",
+
+      auto_respond_with_apology:
+        "Auto-resolve + apology"
+
+    };
+
+
+    return (
+      labels[value] ||
+      formatIssueType(value)
+    );
+
+  }
+
+
+  function formatStepName(
+    value
+  ) {
+
+    const labels = {
+
+      agent_started:
+        "Agent Started",
+
+      understand_request:
+        "Request Understood",
+
+      get_order_status:
+        "Order Status Tool",
+
+      check_operations_policy:
+        "Operations Policy Tool",
+
+      agent_decision:
+        "Agent Decision",
+
+      generate_response:
+        "Response Generated",
+
+      human_escalation:
+        "Human Escalation",
+
+      notify_operations:
+        "Notification Sent",
+
+      verify_outcome:
+        "Outcome Verified",
+
+      agent_completed:
+        "Agent Completed",
+
+      missing_order_id:
+        "Information Validation"
+
+    };
+
+
+    return (
+      labels[value] ||
+      formatIssueType(value)
+    );
+
+  }
+
+
+  function formatReason(
+    value
+  ) {
+
+    if (!value) {
+      return "";
+    }
+
+
+    const labels = {
+
+      within_normal_parameters:
+        "The shipment is currently within the expected operational parameters.",
+
+      customer_reports_delay_but_system_shows_on_time:
+        "The customer reported a delay, but the shipment system shows the order is still within its expected delivery window.",
+
+      customs_hold_requires_human_review:
+        "The shipment is currently held by customs and requires human review."
+
+    };
+
+
+    return (
+      labels[value] ||
+      value
+    );
+
+  }
+
+
+  function shortId(
+    value
+  ) {
+
+    if (!value) {
+      return "—";
+    }
+
+
+    return value
+      .toString()
+      .slice(0, 8)
+      .toUpperCase();
+
+  }
+
+
+  function escapeHtml(
+    value
+  ) {
+
+    return String(
+      value ?? ""
+    )
+      .replaceAll(
+        "&",
+        "&amp;"
+      )
+      .replaceAll(
+        "<",
+        "&lt;"
+      )
+      .replaceAll(
+        ">",
+        "&gt;"
+      )
+      .replaceAll(
+        '"',
+        "&quot;"
+      )
+      .replaceAll(
+        "'",
+        "&#039;"
+      );
+
+  }
+
+
+  function escapeAttribute(
+    value
+  ) {
+
+    return String(
+      value ?? ""
+    )
+      .replaceAll(
+        "'",
+        "\\'"
+      );
+
+  }
+
+
+  /* ==============================================================
+     INITIALIZE
+  ============================================================== */
+
+  loadDashboard();
+
+  setInterval(
+    loadDashboard,
+    10000
+  );
+
 </script>
+
 </body>
 </html>
